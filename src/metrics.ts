@@ -7,6 +7,7 @@ export interface VaultMetrics {
   size: number;
   links: number;
   words: number;
+  noteWords: number;//单篇笔记的字数
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ export class VaultMetrics extends Events implements VaultMetrics {
   words: number = 0;
   createdAt: string = '';
   updatedAt: string = '';
+  noteWords: number = 0;
 
   public reset() {
     this.files = 0;
@@ -29,6 +31,7 @@ export class VaultMetrics extends Events implements VaultMetrics {
     this.size = 0;
     this.links = 0;
     this.words = 0;
+    this.noteWords = 0;
     this.createdAt = '';
     this.updatedAt = '';
   }

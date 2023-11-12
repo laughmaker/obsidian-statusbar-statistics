@@ -160,7 +160,7 @@ export class VaultMetricsCollector {
 
 }
 
-class NoteMetricsCollector {
+export class NoteMetricsCollector {
 
   static TOKENIZERS = new Map([
     ["paragraph", MARKDOWN_TOKENIZER],
@@ -218,7 +218,7 @@ class NoteMetricsCollector {
   }
 }
 
-class FileMetricsCollector {
+export class FileMetricsCollector {
 
   public async collect(file: TFile, metadata: CachedMetadata): Promise<VaultMetrics> {
     let metrics = new VaultMetrics();

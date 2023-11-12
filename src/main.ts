@@ -1,7 +1,7 @@
 import { Component, Vault, TFile, Plugin, debounce, MetadataCache, CachedMetadata, TFolder } from 'obsidian';
 import { BytesFormatter, DateFormatter, DecimalUnitFormatter } from './format';
 import { VaultMetrics } from './metrics';
-import { VaultMetricsCollector } from './collect';
+import { VaultMetricsCollector, NoteMetricsCollector } from './collect';
 import { StatisticsPluginSettings, StatisticsPluginSettingTab } from './settings';
 
 const DEFAULT_SETTINGS: Partial<StatisticsPluginSettings> = {
@@ -55,7 +55,8 @@ export default class StatisticsPlugin extends Plugin {
     this.statusBarItem.refresh();
   }
 
-  private onfileopen(file: TFile) {
+  // 打开文件时的回调
+  private async onfileopen(file: TFile) {
     // console.log(`onfileopen: ${file.name}`)
     if (file == null) {
       return;
@@ -64,25 +65,24 @@ export default class StatisticsPlugin extends Plugin {
     this.vaultMetrics.createdAt = this.dateToLocalString(file.stat.ctime)
     this.vaultMetrics.updatedAt = this.dateToLocalString(file.stat.mtime)
 
-    // metrics.words = await this.vault.cachedRead(file).then((content: string) => {
-    //   return metadata.sections?.map(section => {
-    //     const sectionType = section.type;
-    //     const startOffset = section.position?.start?.offset;
-    //     const endOffset = section.position?.end?.offset;
-    //     const tokenizer = NoteMetricsCollector.TOKENIZERS.get(sectionType);
-    //     if (!tokenizer) {
-    //       console.log(`${file.path}: no tokenizer, section.type=${section.type}`);
-    //       return 0;
-    //     } else {
-    //       const tokens = tokenizer.tokenize(content.substring(startOffset, endOffset));
-    //       return tokens.length;
-    //     }
-    //   }).reduce((a, b) => a + b, 0);
-    // }).catch((e) => {
-    //   console.log(`${file.path} ${e}`);
-    //   return 0;
-    // });
-
+    this.vaultMetrics.noteWords = await this.app.vault.cachedRead(file).then((content: string) => {
+      return this.app.metadataCache.getFileCache(file).sections?.map(section => {
+        const sectionType = section.type;
+        const startOffset = section.position?.start?.offset;
+        const endOffset = section.position?.end?.offset;
+        const tokenizer = NoteMetricsCollector.TOKENIZERS.get(sectionType);
+        if (!tokenizer) {
+          console.log(`${file.path}: no tokenizer, section.type=${section.type}`);
+          return 0;
+        } else {
+          const tokens = tokenizer.tokenize(content.substring(startOffset, endOffset));
+          return tokens.length;
+        }
+      }).reduce((a, b) => a + b, 0);
+    }).catch((e) => {
+      console.log(`${file.path} ${e}`);
+      return 0;
+    });
 
     this.statusBarItem.refresh();
   }
@@ -198,31 +198,34 @@ class StatisticsStatusBarItem {
   constructor(owner: StatisticsPlugin, statusBarItem: HTMLElement) {
     this.owner = owner;
     this.statusBarItem = statusBarItem;
-
     this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("notes").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("篇笔记").format(s.notes) }));
-    this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("attachments").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("个附件").format(s.attachments) }));
-    this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("files").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("个文件").format(s.files) }));
-    this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("links").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("个链接").format(s.links) }));
-    this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("words").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("字").format(s.words) }));
-    this.statisticViews.push(new StatisticView(this.statusBarItem).
-      setStatisticName("sizes").
-      setFormatter((s: VaultMetrics) => { return new BytesFormatter().format(s.size) }));
+      setStatisticName("noteWords").
+      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("字").format(s.noteWords) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("createdAt").
       setFormatter((s: VaultMetrics) => { return new DateFormatter("创建于").format(s.createdAt) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("updatedAt").
       setFormatter((s: VaultMetrics) => { return new DateFormatter("更新于").format(s.updatedAt) }));
+
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("notes").
+      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("篇笔记").format(s.notes) }));
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("attachments").
+      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个附件").format(s.attachments) }));
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("files").
+      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个文件").format(s.files) }));
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("links").
+      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个链接").format(s.links) }));
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("words").
+      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("字").format(s.words) }));
+    this.statisticViews.push(new StatisticView(this.statusBarItem).
+      setStatisticName("sizes").
+      setFormatter((s: VaultMetrics) => { return '共' + new BytesFormatter().format(s.size) }));
 
     this.statusBarItem.onClickEvent(() => { this.onclick() });
   }
@@ -238,14 +241,15 @@ class StatisticsStatusBarItem {
 
   public refresh() {
     if (this.owner.settings.displayIndividualItems) {
-      this.statisticViews[0].setActive(this.owner.settings.showNotes).refresh(this.vaultMetrics);
-      this.statisticViews[1].setActive(this.owner.settings.showAttachments).refresh(this.vaultMetrics);
-      this.statisticViews[2].setActive(this.owner.settings.showFiles).refresh(this.vaultMetrics);
-      this.statisticViews[3].setActive(this.owner.settings.showLinks).refresh(this.vaultMetrics);
-      this.statisticViews[4].setActive(this.owner.settings.showWords).refresh(this.vaultMetrics);
-      this.statisticViews[5].setActive(this.owner.settings.showSize).refresh(this.vaultMetrics);
-      this.statisticViews[6].setActive(this.owner.settings.showCreatedAt).refresh(this.vaultMetrics);
-      this.statisticViews[7].setActive(this.owner.settings.showUpdatedAt).refresh(this.vaultMetrics);
+      this.statisticViews[0].setActive(this.owner.settings.showNoteWords).refresh(this.vaultMetrics);
+      this.statisticViews[1].setActive(this.owner.settings.showCreatedAt).refresh(this.vaultMetrics);
+      this.statisticViews[2].setActive(this.owner.settings.showUpdatedAt).refresh(this.vaultMetrics);
+      this.statisticViews[3].setActive(this.owner.settings.showNotes).refresh(this.vaultMetrics);
+      this.statisticViews[4].setActive(this.owner.settings.showAttachments).refresh(this.vaultMetrics);
+      this.statisticViews[5].setActive(this.owner.settings.showFiles).refresh(this.vaultMetrics);
+      this.statisticViews[6].setActive(this.owner.settings.showLinks).refresh(this.vaultMetrics);
+      this.statisticViews[7].setActive(this.owner.settings.showWords).refresh(this.vaultMetrics);
+      this.statisticViews[8].setActive(this.owner.settings.showSize).refresh(this.vaultMetrics);
     } else {
       this.statisticViews.forEach((view, i) => {
         view.setActive(this.displayedStatisticIndex == i).refresh(this.vaultMetrics);

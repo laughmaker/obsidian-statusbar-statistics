@@ -9,6 +9,7 @@ export interface StatisticsPluginSettings {
   showFiles: boolean,
   showLinks: boolean,
   showWords: boolean,
+  showNoteWords: boolean,
   showSize: boolean,
   showCreatedAt: boolean,
   showUpdatedAt: boolean,
@@ -43,6 +44,39 @@ export class StatisticsPluginSettingTab extends PluginSettingTab {
     if (!this.plugin.settings.displayIndividualItems) {
       return;
     }
+
+    new Setting(containerEl)
+      .setName("显示单条笔记字数")
+      .addToggle((value) => {
+        value
+          .setValue(this.plugin.settings.showNoteWords)
+          .onChange(async (value) => {
+            this.plugin.settings.showNoteWords = value;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("显示文件创建日期")
+      .addToggle((value) => {
+        value
+          .setValue(this.plugin.settings.showCreatedAt)
+          .onChange(async (value) => {
+            this.plugin.settings.showCreatedAt = value;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName("显示文件更新日期")
+      .addToggle((value) => {
+        value
+          .setValue(this.plugin.settings.showUpdatedAt)
+          .onChange(async (value) => {
+            this.plugin.settings.showUpdatedAt = value;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(containerEl)
       .setName("显示仓库笔记统计")
@@ -89,7 +123,7 @@ export class StatisticsPluginSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("显示仓库词统计")
+      .setName("显示仓库字数统计")
       .addToggle((value) => {
         value
           .setValue(this.plugin.settings.showWords)
@@ -110,27 +144,6 @@ export class StatisticsPluginSettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(containerEl)
-      .setName("显示文件创建日期")
-      .addToggle((value) => {
-        value
-          .setValue(this.plugin.settings.showCreatedAt)
-          .onChange(async (value) => {
-            this.plugin.settings.showCreatedAt = value;
-            await this.plugin.saveSettings();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName("显示文件更新日期")
-      .addToggle((value) => {
-        value
-          .setValue(this.plugin.settings.showUpdatedAt)
-          .onChange(async (value) => {
-            this.plugin.settings.showUpdatedAt = value;
-            await this.plugin.saveSettings();
-          });
-      });
 
   }
 }

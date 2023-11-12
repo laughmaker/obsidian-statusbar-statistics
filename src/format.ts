@@ -21,7 +21,7 @@ export class DecimalUnitFormatter extends Formatter {
   }
 
   public format(value: number): string {
-    return `共${this.numberFormat.format(value)}${this.unit}`
+    return `${this.numberFormat.format(value)}${this.unit}`
   }
 }
 
@@ -55,7 +55,7 @@ export abstract class ScalingUnitFormatter extends Formatter {
 
   public format(value: number): string {
     let [scaledValue, scaledUnit] = this.scale(value);
-    return `共${this.numberFormat.format(scaledValue)}${scaledUnit}`
+    return `${this.numberFormat.format(scaledValue)}${scaledUnit}`
   }
 
 }
