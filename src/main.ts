@@ -43,6 +43,7 @@ export default class StatisticsPlugin extends Plugin {
     this.addSettingTab(new StatisticsPluginSettingTab(this.app, this));
 
     this.registerEvent(this.app.workspace.on("file-open", (file: TFile) => { this.onfileopen(file) }));
+    this.registerEvent(this.app.metadataCache.on("changed", (file: TFile) => { this.onfilechanged(file) }));
 
   }
 
@@ -65,6 +66,20 @@ export default class StatisticsPlugin extends Plugin {
     this.metrics.createdAt = this.dateToLocalString(file.stat.ctime)
     this.metrics.updatedAt = this.dateToLocalString(file.stat.mtime)
 
+    this.updatenoteWords(file);
+
+    this.statusBarItem.refresh();
+  }
+
+  // 笔记变化时的回调；
+  private async onfilechanged(file: TFile) {
+    this.metrics.updatedAt = this.dateToLocalString(file.stat.mtime);
+    this.updatenoteWords(file);
+  }
+
+
+  // 更新笔记中的字数
+  private async updatenoteWords(file: TFile) {
     this.metrics.noteWords = await this.app.vault.cachedRead(file).then((content: string) => {
       return this.app.metadataCache.getFileCache(file).sections?.map(section => {
         const sectionType = section.type;
@@ -83,8 +98,6 @@ export default class StatisticsPlugin extends Plugin {
       console.log(`${file.path} ${e}`);
       return 0;
     });
-
-    this.statusBarItem.refresh();
   }
 
   // 将时间戳转换为本地格式时间
