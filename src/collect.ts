@@ -17,7 +17,7 @@ export class MetricsCollector {
   private metadataCache: MetadataCache;
   private data: Map<string, Metrics> = new Map();
   private backlog: Array<string> = new Array();
-  private vaultMetrics: Metrics = new Metrics();
+  private metrics: Metrics = new Metrics();
 
   constructor(owner: Component) {
     this.owner = owner;
@@ -39,8 +39,8 @@ export class MetricsCollector {
     return this;
   }
 
-  public setVaultMetrics(vaultMetrics: Metrics) {
-    this.vaultMetrics = vaultMetrics;
+  public setMetrics(metrics: Metrics) {
+    this.metrics = metrics;
     return this;
   }
 
@@ -54,7 +54,7 @@ export class MetricsCollector {
 
     this.data.clear();
     this.backlog = new Array();
-    this.vaultMetrics?.reset();
+    this.metrics?.reset();
     this.vault.getFiles().forEach((file: TFile) => {
       if (!(file instanceof TFolder)) {
         this.push(file);
@@ -147,7 +147,7 @@ export class MetricsCollector {
 
     // Remove the existing values for the passed file if present, update the
     // raw values, then add the values for the passed file to the totals.
-    this.vaultMetrics?.dec(this.data.get(key));
+    this.metrics?.dec(this.data.get(key));
 
     if (metrics == null) {
       this.data.delete(key);
@@ -155,7 +155,7 @@ export class MetricsCollector {
       this.data.set(key, metrics);
     }
 
-    this.vaultMetrics?.inc(metrics);
+    this.metrics?.inc(metrics);
   }
 
 }

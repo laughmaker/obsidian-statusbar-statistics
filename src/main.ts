@@ -19,7 +19,7 @@ export default class StatisticsPlugin extends Plugin {
   private statusBarItem: StatisticsStatusBarItem = null;
 
   public vaultMetricsCollector: MetricsCollector;
-  public vaultMetrics: Metrics;
+  public metrics: Metrics;
 
   settings: StatisticsPluginSettings;
 
@@ -28,17 +28,17 @@ export default class StatisticsPlugin extends Plugin {
 
     await this.loadSettings();
 
-    this.vaultMetrics = new Metrics();
+    this.metrics = new Metrics();
 
     this.vaultMetricsCollector = new MetricsCollector(this).
       setApp(this.app).
       setVault(this.app.vault).
       setMetadataCache(this.app.metadataCache).
-      setVaultMetrics(this.vaultMetrics).
+      setMetrics(this.metrics).
       start();
 
     this.statusBarItem = new StatisticsStatusBarItem(this, this.addStatusBarItem()).
-      setVaultMetrics(this.vaultMetrics);
+      setVaultMetrics(this.metrics);
 
     this.addSettingTab(new StatisticsPluginSettingTab(this.app, this));
 
@@ -62,10 +62,10 @@ export default class StatisticsPlugin extends Plugin {
       return;
     }
 
-    this.vaultMetrics.createdAt = this.dateToLocalString(file.stat.ctime)
-    this.vaultMetrics.updatedAt = this.dateToLocalString(file.stat.mtime)
+    this.metrics.createdAt = this.dateToLocalString(file.stat.ctime)
+    this.metrics.updatedAt = this.dateToLocalString(file.stat.mtime)
 
-    this.vaultMetrics.noteWords = await this.app.vault.cachedRead(file).then((content: string) => {
+    this.metrics.noteWords = await this.app.vault.cachedRead(file).then((content: string) => {
       return this.app.metadataCache.getFileCache(file).sections?.map(section => {
         const sectionType = section.type;
         const startOffset = section.position?.start?.offset;
@@ -188,7 +188,7 @@ class StatisticsStatusBarItem {
   private statusBarItem: HTMLElement;
 
   // raw stats
-  private vaultMetrics: Metrics;
+  private metrics: Metrics;
 
   // index of the currently displayed stat.
   private displayedStatisticIndex = 0;
@@ -231,8 +231,8 @@ class StatisticsStatusBarItem {
   }
 
   public setVaultMetrics(vaultMetrics: Metrics) {
-    this.vaultMetrics = vaultMetrics;
-    this.owner.registerEvent(this.vaultMetrics?.on("updated", this.refreshSoon));
+    this.metrics = vaultMetrics;
+    this.owner.registerEvent(this.metrics?.on("updated", this.refreshSoon));
     this.refreshSoon();
     return this;
   }
@@ -241,18 +241,18 @@ class StatisticsStatusBarItem {
 
   public refresh() {
     if (this.owner.settings.displayIndividualItems) {
-      this.statisticViews[0].setActive(this.owner.settings.showNoteWords).refresh(this.vaultMetrics);
-      this.statisticViews[1].setActive(this.owner.settings.showCreatedAt).refresh(this.vaultMetrics);
-      this.statisticViews[2].setActive(this.owner.settings.showUpdatedAt).refresh(this.vaultMetrics);
-      this.statisticViews[3].setActive(this.owner.settings.showNotes).refresh(this.vaultMetrics);
-      this.statisticViews[4].setActive(this.owner.settings.showAttachments).refresh(this.vaultMetrics);
-      this.statisticViews[5].setActive(this.owner.settings.showFiles).refresh(this.vaultMetrics);
-      this.statisticViews[6].setActive(this.owner.settings.showLinks).refresh(this.vaultMetrics);
-      this.statisticViews[7].setActive(this.owner.settings.showWords).refresh(this.vaultMetrics);
-      this.statisticViews[8].setActive(this.owner.settings.showSize).refresh(this.vaultMetrics);
+      this.statisticViews[0].setActive(this.owner.settings.showNoteWords).refresh(this.metrics);
+      this.statisticViews[1].setActive(this.owner.settings.showCreatedAt).refresh(this.metrics);
+      this.statisticViews[2].setActive(this.owner.settings.showUpdatedAt).refresh(this.metrics);
+      this.statisticViews[3].setActive(this.owner.settings.showNotes).refresh(this.metrics);
+      this.statisticViews[4].setActive(this.owner.settings.showAttachments).refresh(this.metrics);
+      this.statisticViews[5].setActive(this.owner.settings.showFiles).refresh(this.metrics);
+      this.statisticViews[6].setActive(this.owner.settings.showLinks).refresh(this.metrics);
+      this.statisticViews[7].setActive(this.owner.settings.showWords).refresh(this.metrics);
+      this.statisticViews[8].setActive(this.owner.settings.showSize).refresh(this.metrics);
     } else {
       this.statisticViews.forEach((view, i) => {
-        view.setActive(this.displayedStatisticIndex == i).refresh(this.vaultMetrics);
+        view.setActive(this.displayedStatisticIndex == i).refresh(this.metrics);
       });
     }
 
