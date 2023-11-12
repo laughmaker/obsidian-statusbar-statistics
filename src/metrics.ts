@@ -1,18 +1,18 @@
 import { Events, EventRef } from 'obsidian';
 
-export interface VaultMetrics {
+export interface Metrics {
   files: number;
   notes: number;
   attachments: number;
   size: number;
   links: number;
-  words: number;
+  words: number; // 整个仓库字数
   noteWords: number;//单篇笔记的字数
   createdAt: string;
   updatedAt: string;
 }
 
-export class VaultMetrics extends Events implements VaultMetrics {
+export class Metrics extends Events implements Metrics {
 
   files: number = 0;
   notes: number = 0;
@@ -36,7 +36,7 @@ export class VaultMetrics extends Events implements VaultMetrics {
     this.updatedAt = '';
   }
 
-  public dec(metrics: VaultMetrics) {
+  public dec(metrics: Metrics) {
     this.files -= metrics?.files || 0;
     this.notes -= metrics?.notes || 0;
     this.attachments -= metrics?.attachments || 0;
@@ -46,7 +46,7 @@ export class VaultMetrics extends Events implements VaultMetrics {
     this.trigger("updated");
   }
 
-  public inc(metrics: VaultMetrics) {
+  public inc(metrics: Metrics) {
     this.files += metrics?.files || 0;
     this.notes += metrics?.notes || 0;
     this.attachments += metrics?.attachments || 0;
@@ -56,7 +56,7 @@ export class VaultMetrics extends Events implements VaultMetrics {
     this.trigger("updated");
   }
 
-  public on(name: "updated", callback: (vaultMetrics: VaultMetrics) => any, ctx?: any): EventRef {
+  public on(name: "updated", callback: (vaultMetrics: Metrics) => any, ctx?: any): EventRef {
     return super.on("updated", callback, ctx);
   }
 

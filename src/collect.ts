@@ -1,5 +1,5 @@
 import { Component, Vault, MetadataCache, TFile, TFolder, CachedMetadata, App } from 'obsidian';
-import { VaultMetrics } from './metrics';
+import { Metrics } from './metrics';
 import { MARKDOWN_TOKENIZER, UNIT_TOKENIZER } from './text';
 
 
@@ -9,15 +9,15 @@ enum FileType {
   Attachment,
 }
 
-export class VaultMetricsCollector {
+export class MetricsCollector {
 
   private owner: Component;
   private vault: Vault;
   private app: App;
   private metadataCache: MetadataCache;
-  private data: Map<string, VaultMetrics> = new Map();
+  private data: Map<string, Metrics> = new Map();
   private backlog: Array<string> = new Array();
-  private vaultMetrics: VaultMetrics = new VaultMetrics();
+  private vaultMetrics: Metrics = new Metrics();
 
   constructor(owner: Component) {
     this.owner = owner;
@@ -39,7 +39,7 @@ export class VaultMetricsCollector {
     return this;
   }
 
-  public setVaultMetrics(vaultMetrics: VaultMetrics) {
+  public setVaultMetrics(vaultMetrics: Metrics) {
     this.vaultMetrics = vaultMetrics;
     return this;
   }
@@ -117,7 +117,7 @@ export class VaultMetricsCollector {
     }
   }
 
-  public async collect(file: TFile): Promise<VaultMetrics> {
+  public async collect(file: TFile): Promise<Metrics> {
     let metadata: CachedMetadata;
     try {
       metadata = this.metadataCache.getFileCache(file);
@@ -142,7 +142,7 @@ export class VaultMetricsCollector {
     }
   }
 
-  public update(fileOrPath: TFile | string, metrics: VaultMetrics) {
+  public update(fileOrPath: TFile | string, metrics: Metrics) {
     let key = (fileOrPath instanceof TFile) ? fileOrPath.path : fileOrPath;
 
     // Remove the existing values for the passed file if present, update the
@@ -187,8 +187,8 @@ export class NoteMetricsCollector {
     this.vault = vault;
   }
 
-  public async collect(file: TFile, metadata: CachedMetadata): Promise<VaultMetrics> {
-    let metrics = new VaultMetrics();
+  public async collect(file: TFile, metadata: CachedMetadata): Promise<Metrics> {
+    let metrics = new Metrics();
     metrics.files = 1;
     metrics.notes = 1;
     metrics.attachments = 0;
@@ -220,8 +220,8 @@ export class NoteMetricsCollector {
 
 export class FileMetricsCollector {
 
-  public async collect(file: TFile, metadata: CachedMetadata): Promise<VaultMetrics> {
-    let metrics = new VaultMetrics();
+  public async collect(file: TFile, metadata: CachedMetadata): Promise<Metrics> {
+    let metrics = new Metrics();
     metrics.files = 1;
     metrics.notes = 0;
     metrics.attachments = 1;

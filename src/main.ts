@@ -1,7 +1,7 @@
 import { Component, Vault, TFile, Plugin, debounce, MetadataCache, CachedMetadata, TFolder } from 'obsidian';
 import { BytesFormatter, DateFormatter, DecimalUnitFormatter } from './format';
-import { VaultMetrics } from './metrics';
-import { VaultMetricsCollector, NoteMetricsCollector } from './collect';
+import { Metrics } from './metrics';
+import { MetricsCollector, NoteMetricsCollector } from './collect';
 import { StatisticsPluginSettings, StatisticsPluginSettingTab } from './settings';
 
 const DEFAULT_SETTINGS: Partial<StatisticsPluginSettings> = {
@@ -18,8 +18,8 @@ export default class StatisticsPlugin extends Plugin {
 
   private statusBarItem: StatisticsStatusBarItem = null;
 
-  public vaultMetricsCollector: VaultMetricsCollector;
-  public vaultMetrics: VaultMetrics;
+  public vaultMetricsCollector: MetricsCollector;
+  public vaultMetrics: Metrics;
 
   settings: StatisticsPluginSettings;
 
@@ -28,9 +28,9 @@ export default class StatisticsPlugin extends Plugin {
 
     await this.loadSettings();
 
-    this.vaultMetrics = new VaultMetrics();
+    this.vaultMetrics = new Metrics();
 
-    this.vaultMetricsCollector = new VaultMetricsCollector(this).
+    this.vaultMetricsCollector = new MetricsCollector(this).
       setApp(this.app).
       setVault(this.app.vault).
       setMetadataCache(this.app.metadataCache).
@@ -115,7 +115,7 @@ class StatisticView {
   private containerEl: HTMLElement;
 
   /** Formatter that extracts and formats a value from a {@link Statistics} instance. */
-  private formatter: (s: VaultMetrics) => string;
+  private formatter: (s: Metrics) => string;
 
   /**
    * Constructor.
@@ -138,7 +138,7 @@ class StatisticView {
   /**
    * Sets the formatter to use to produce the content of the view.
    */
-  setFormatter(formatter: (s: VaultMetrics) => string): StatisticView {
+  setFormatter(formatter: (s: Metrics) => string): StatisticView {
     this.formatter = formatter;
     return this;
   }
@@ -168,7 +168,7 @@ class StatisticView {
    * Refreshes the content of the view with content from the passed {@link
    * Statistics}.
    */
-  refresh(s: VaultMetrics) {
+  refresh(s: Metrics) {
     this.containerEl.setText(this.formatter(s));
   }
 
@@ -188,7 +188,7 @@ class StatisticsStatusBarItem {
   private statusBarItem: HTMLElement;
 
   // raw stats
-  private vaultMetrics: VaultMetrics;
+  private vaultMetrics: Metrics;
 
   // index of the currently displayed stat.
   private displayedStatisticIndex = 0;
@@ -200,37 +200,37 @@ class StatisticsStatusBarItem {
     this.statusBarItem = statusBarItem;
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("noteWords").
-      setFormatter((s: VaultMetrics) => { return new DecimalUnitFormatter("字").format(s.noteWords) }));
+      setFormatter((s: Metrics) => { return new DecimalUnitFormatter("字").format(s.noteWords) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("createdAt").
-      setFormatter((s: VaultMetrics) => { return new DateFormatter("创建于").format(s.createdAt) }));
+      setFormatter((s: Metrics) => { return new DateFormatter("创建于").format(s.createdAt) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("updatedAt").
-      setFormatter((s: VaultMetrics) => { return new DateFormatter("更新于").format(s.updatedAt) }));
+      setFormatter((s: Metrics) => { return new DateFormatter("更新于").format(s.updatedAt) }));
 
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("notes").
-      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("篇笔记").format(s.notes) }));
+      setFormatter((s: Metrics) => { return '共' + new DecimalUnitFormatter("篇笔记").format(s.notes) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("attachments").
-      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个附件").format(s.attachments) }));
+      setFormatter((s: Metrics) => { return '共' + new DecimalUnitFormatter("个附件").format(s.attachments) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("files").
-      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个文件").format(s.files) }));
+      setFormatter((s: Metrics) => { return '共' + new DecimalUnitFormatter("个文件").format(s.files) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("links").
-      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("个链接").format(s.links) }));
+      setFormatter((s: Metrics) => { return '共' + new DecimalUnitFormatter("个链接").format(s.links) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("words").
-      setFormatter((s: VaultMetrics) => { return '共' + new DecimalUnitFormatter("字").format(s.words) }));
+      setFormatter((s: Metrics) => { return '共' + new DecimalUnitFormatter("字").format(s.words) }));
     this.statisticViews.push(new StatisticView(this.statusBarItem).
       setStatisticName("sizes").
-      setFormatter((s: VaultMetrics) => { return '共' + new BytesFormatter().format(s.size) }));
+      setFormatter((s: Metrics) => { return '共' + new BytesFormatter().format(s.size) }));
 
     this.statusBarItem.onClickEvent(() => { this.onclick() });
   }
 
-  public setVaultMetrics(vaultMetrics: VaultMetrics) {
+  public setVaultMetrics(vaultMetrics: Metrics) {
     this.vaultMetrics = vaultMetrics;
     this.owner.registerEvent(this.vaultMetrics?.on("updated", this.refreshSoon));
     this.refreshSoon();
