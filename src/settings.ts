@@ -79,7 +79,7 @@ export class StatisticsPluginSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("显示仓库笔记统计")
+      .setName("显示仓库笔记数统计")
       .addToggle((value) => {
         value
           .setValue(this.plugin.settings.showNotes)
